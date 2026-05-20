@@ -22,8 +22,11 @@ staticfiles/
 
 # Environment variables
 .env
-.env.local
-.env.production
+.env.*
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
 
 # IDE/editor
 .vscode/
