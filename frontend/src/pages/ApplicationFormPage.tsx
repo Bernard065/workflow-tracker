@@ -63,7 +63,7 @@ export function ApplicationFormPage() {
           transition={{ duration: 0.42, ease: "easeOut" }}
         >
           <Card className="overflow-hidden border-white/80 bg-slate-50/95 shadow-2xl shadow-slate-950/25 backdrop-blur">
-            <CardHeader className="border-b bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white sm:p-8">
+            <CardHeader className="border-b bg-linear-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white sm:p-8">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div className="max-w-2xl">
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm font-semibold text-cyan-100 shadow-sm backdrop-blur">

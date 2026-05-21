@@ -3,15 +3,21 @@ import { AlertCircle, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { getApplication, startReview, submitApplication } from "@/api/applications";
+import {
+  getApplication,
+  recordReviewerDecision,
+  startReview,
+  submitApplication,
+} from "@/api/applications";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ApplicationDetailItem } from "@/features/applications/components/ApplicationDetailItem";
 import { ApplicationStatusBadge } from "@/features/applications/components/ApplicationStatusBadge";
 import { ApplicationWorkflowActions } from "@/features/applications/components/ApplicationWorkflowActions";
+import { ReviewerDecisionForm } from "@/features/applications/components/ReviewerDecisionForm";
 import { formatDate } from "@/features/applications/utils";
-import type { Application } from "@/types/application";
+import type { Application, ReviewerDecisionPayload } from "@/types/application";
 import { formatApplicationType } from "@/utils/status";
 
 function formatOptionalDate(value: string | null): string {
@@ -129,6 +135,28 @@ export function ApplicationDetailPage() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to start review.";
+
+      setErrorMessage(message);
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  async function handleReviewerDecision(payload: ReviewerDecisionPayload) {
+    if (!application) {
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      setErrorMessage(null);
+
+      const updatedApplication = await recordReviewerDecision(application.id, payload);
+
+      setApplication(updatedApplication);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to record reviewer decision.";
 
       setErrorMessage(message);
     } finally {
@@ -258,6 +286,14 @@ export function ApplicationDetailPage() {
                     </p>
                   </CardContent>
                 </Card>
+
+                {application.status === "under_review" && (
+                  <ReviewerDecisionForm
+                    application={application}
+                    isSubmitting={isProcessing}
+                    onSubmit={handleReviewerDecision}
+                  />
+                )}
 
                 {application.reviewer_comment && (
                   <Card className="border-cyan-200 bg-cyan-50 shadow-sm">
