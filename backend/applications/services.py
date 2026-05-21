@@ -76,13 +76,20 @@ def record_reviewer_decision(
     if decision not in allowed_decisions:
         raise HttpError(400, "Invalid reviewer decision.")
 
-    if decision in [
-        ApplicationStatus.NEED_MORE_INFORMATION,
-        ApplicationStatus.REJECTED,
-    ] and not reviewer_comment.strip():
+    if (
+        decision
+        in [
+            ApplicationStatus.NEED_MORE_INFORMATION,
+            ApplicationStatus.REJECTED,
+        ]
+        and not reviewer_comment.strip()
+    ):
         raise HttpError(
             400,
-            "Reviewer comment is required for Need More Information or Rejected decisions.",
+            (
+                "Reviewer comment is required for Need More Information "
+                "or Rejected decisions."
+            ),
         )
 
     application.status = decision

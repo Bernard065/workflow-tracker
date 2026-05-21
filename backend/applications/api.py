@@ -1,4 +1,3 @@
-from typing import List
 from uuid import UUID
 
 from django.shortcuts import get_object_or_404
@@ -37,7 +36,7 @@ def create_application(request, payload: ApplicationCreateSchema):
     return Status(201, application)
 
 
-@router.get("", response=List[ApplicationListSchema])
+@router.get("", response=list[ApplicationListSchema])
 def list_applications(request):
     return Application.objects.all()
 

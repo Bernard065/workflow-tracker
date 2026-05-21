@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from ninja import Schema
@@ -17,16 +16,16 @@ class ApplicationCreateSchema(Schema):
 
 
 class ApplicationUpdateSchema(Schema):
-    applicant_name: Optional[str] = None
-    applicant_email: Optional[EmailStr] = None
-    company_name: Optional[str] = None
-    application_type: Optional[ApplicationType] = None
-    description: Optional[str] = None
+    applicant_name: str | None = None
+    applicant_email: EmailStr | None = None
+    company_name: str | None = None
+    application_type: ApplicationType | None = None
+    description: str | None = None
 
 
 class ReviewerDecisionSchema(Schema):
     decision: ApplicationStatus
-    reviewer_comment: Optional[str] = ""
+    reviewer_comment: str | None = ""
 
 
 class ApplicationOutSchema(Schema):
@@ -41,8 +40,8 @@ class ApplicationOutSchema(Schema):
     reviewer_comment: str
     created_at: datetime
     updated_at: datetime
-    submitted_at: Optional[datetime]
-    reviewed_at: Optional[datetime]
+    submitted_at: datetime | None
+    reviewed_at: datetime | None
 
 
 class ApplicationListSchema(Schema):
