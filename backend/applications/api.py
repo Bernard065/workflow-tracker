@@ -2,7 +2,7 @@ from typing import List
 from uuid import UUID
 
 from django.shortcuts import get_object_or_404
-from ninja import Router
+from ninja import Router, Status
 
 from .models import Application
 from .schemas import (
@@ -34,7 +34,7 @@ def create_application(request, payload: ApplicationCreateSchema):
         description=payload.description,
     )
 
-    return 201, application
+    return Status(201, application)
 
 
 @router.get("", response=List[ApplicationListSchema])
