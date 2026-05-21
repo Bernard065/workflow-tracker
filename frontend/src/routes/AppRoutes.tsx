@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import { ApplicationDetailPage } from "@/pages/ApplicationDetailPage";
 import { ApplicationFormPage } from "@/pages/ApplicationFormPage";
 import { ApplicationListPage } from "@/pages/ApplicationListPage";
 
@@ -9,6 +10,7 @@ export function AppRoutes() {
       <Route path="/" element={<Navigate to="/applications" replace />} />
       <Route path="/applications" element={<ApplicationListPage />} />
       <Route path="/applications/new" element={<ApplicationFormPage />} />
+      <Route path="/applications/:applicationId" element={<ApplicationDetailPage />} />
     </Routes>
   );
 }

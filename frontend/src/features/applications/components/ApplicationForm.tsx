@@ -112,97 +112,145 @@ export function ApplicationForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid gap-5 md:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-black text-slate-950">Applicant details</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Provide the primary applicant information for this workflow record.
+          </p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="applicant_name" className="font-bold">
+              Applicant name
+            </Label>
+            <Input
+              id="applicant_name"
+              value={values.applicant_name}
+              placeholder="Jane Doe"
+              className="h-12 rounded-2xl bg-slate-50"
+              onChange={(event) => updateField("applicant_name", event.target.value)}
+            />
+            {errors.applicant_name && (
+              <p className="text-sm font-medium text-red-600">
+                {errors.applicant_name}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="applicant_email" className="font-bold">
+              Applicant email
+            </Label>
+            <Input
+              id="applicant_email"
+              type="email"
+              value={values.applicant_email}
+              placeholder="jane@example.com"
+              className="h-12 rounded-2xl bg-slate-50"
+              onChange={(event) => updateField("applicant_email", event.target.value)}
+            />
+            {errors.applicant_email && (
+              <p className="text-sm font-medium text-red-600">
+                {errors.applicant_email}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-black text-slate-950">Company and application</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Select the application type and add the company details.
+          </p>
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="company_name" className="font-bold">
+              Company name
+            </Label>
+            <Input
+              id="company_name"
+              value={values.company_name}
+              placeholder="Acme Holdings Ltd"
+              className="h-12 rounded-2xl bg-slate-50"
+              onChange={(event) => updateField("company_name", event.target.value)}
+            />
+            {errors.company_name && (
+              <p className="text-sm font-medium text-red-600">{errors.company_name}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="font-bold">Application type</Label>
+            <Select
+              value={values.application_type}
+              onValueChange={(value) =>
+                updateField("application_type", value as ApplicationType)
+              }
+            >
+              <SelectTrigger className="h-12 rounded-2xl bg-slate-50">
+                <SelectValue placeholder="Select application type" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {applicationTypeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {errors.application_type && (
+              <p className="text-sm font-medium text-red-600">
+                {errors.application_type}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="mb-6">
+          <h2 className="text-xl font-black text-slate-950">Application description</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Describe the purpose of the application clearly enough for review.
+          </p>
+        </div>
+
         <div className="space-y-2">
-          <Label htmlFor="applicant_name">Applicant name</Label>
-          <Input
-            id="applicant_name"
-            value={values.applicant_name}
-            placeholder="Jane Doe"
-            onChange={(event) => updateField("applicant_name", event.target.value)}
+          <Label htmlFor="description" className="font-bold">
+            Description
+          </Label>
+          <Textarea
+            id="description"
+            value={values.description}
+            placeholder="Describe the purpose of this application..."
+            className="min-h-40 resize-y rounded-2xl bg-slate-50 leading-7"
+            onChange={(event) => updateField("description", event.target.value)}
           />
-          {errors.applicant_name && (
-            <p className="text-sm font-medium text-red-600">{errors.applicant_name}</p>
+          {errors.description && (
+            <p className="text-sm font-medium text-red-600">{errors.description}</p>
           )}
         </div>
+      </section>
 
-        <div className="space-y-2">
-          <Label htmlFor="applicant_email">Applicant email</Label>
-          <Input
-            id="applicant_email"
-            type="email"
-            value={values.applicant_email}
-            placeholder="jane@example.com"
-            onChange={(event) => updateField("applicant_email", event.target.value)}
-          />
-          {errors.applicant_email && (
-            <p className="text-sm font-medium text-red-600">{errors.applicant_email}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="company_name">Company name</Label>
-          <Input
-            id="company_name"
-            value={values.company_name}
-            placeholder="Acme Holdings Ltd"
-            onChange={(event) => updateField("company_name", event.target.value)}
-          />
-          {errors.company_name && (
-            <p className="text-sm font-medium text-red-600">{errors.company_name}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label>Application type</Label>
-          <Select
-            value={values.application_type}
-            onValueChange={(value) =>
-              updateField("application_type", value as ApplicationType)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select application type" />
-            </SelectTrigger>
-
-            <SelectContent>
-              {applicationTypeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {errors.application_type && (
-            <p className="text-sm font-medium text-red-600">
-              {errors.application_type}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={values.description}
-          placeholder="Describe the purpose of this application..."
-          className="min-h-36 resize-y"
-          onChange={(event) => updateField("description", event.target.value)}
-        />
-        {errors.description && (
-          <p className="text-sm font-medium text-red-600">{errors.description}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button type="submit" disabled={isSubmitting} className="rounded-full px-6">
+      <div className="sticky bottom-4 z-20 flex flex-col-reverse gap-3 rounded-3xl border border-slate-200 bg-white/90 p-3 shadow-2xl shadow-slate-950/10 backdrop-blur sm:flex-row sm:justify-end">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="h-12 rounded-full bg-cyan-400 px-7 font-black text-slate-950 shadow-lg shadow-cyan-950/20 transition-all duration-200 hover:-translate-y-0.5 hover:bg-cyan-300 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-70"
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              Saving draft...
             </>
           ) : (
             <>
