@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ApplicationDetailPage } from "@/pages/ApplicationDetailPage";
 import { ApplicationFormPage } from "@/pages/ApplicationFormPage";
 import { ApplicationListPage } from "@/pages/ApplicationListPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
 
 export function AppRoutes() {
   return (
@@ -15,6 +16,7 @@ export function AppRoutes() {
         path="/applications/:applicationId/edit"
         element={<ApplicationFormPage />}
       />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
