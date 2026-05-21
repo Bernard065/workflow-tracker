@@ -1,9 +1,13 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, FilePlus2, ShieldCheck } from "lucide-react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { createApplication } from "@/api/applications";
+import {
+  createApplication,
+  getApplication,
+  updateApplication,
+} from "@/api/applications";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,31 +18,108 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ApplicationForm } from "@/features/applications/components/ApplicationForm";
-import type { ApplicationCreatePayload } from "@/types/application";
+import type { Application, ApplicationCreatePayload } from "@/types/application";
+import { canEditApplication } from "@/utils/status";
 
 export function ApplicationFormPage() {
   const navigate = useNavigate();
+  const { applicationId } = useParams<{ applicationId: string }>();
 
+  const isEditMode = Boolean(applicationId);
+
+  const [application, setApplication] = useState<Application | null>(null);
+  const [isLoading, setIsLoading] = useState(isEditMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function handleCreateApplication(payload: ApplicationCreatePayload) {
+  useEffect(() => {
+    let isActive = true;
+
+    if (!applicationId) {
+      return () => {
+        isActive = false;
+      };
+    }
+
+    queueMicrotask(() => {
+      if (!isActive) {
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage(null);
+    });
+
+    void getApplication(applicationId)
+      .then((data) => {
+        if (!isActive) {
+          return;
+        }
+
+        setApplication(data);
+
+        if (!canEditApplication(data.status)) {
+          setErrorMessage("This application cannot be edited in its current status.");
+        }
+      })
+      .catch((error: unknown) => {
+        if (!isActive) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Failed to load application.";
+
+        setApplication(null);
+        setErrorMessage(message);
+      })
+      .finally(() => {
+        if (!isActive) {
+          return;
+        }
+
+        setIsLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [applicationId]);
+
+  async function handleSubmit(payload: ApplicationCreatePayload) {
     try {
       setIsSubmitting(true);
       setErrorMessage(null);
 
-      const application = await createApplication(payload);
+      if (applicationId) {
+        const updatedApplication = await updateApplication(applicationId, payload);
 
-      navigate(`/applications/${application.id}`);
+        navigate(`/applications/${updatedApplication.id}`);
+        return;
+      }
+
+      const createdApplication = await createApplication(payload);
+
+      navigate(`/applications/${createdApplication.id}`);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to create application.";
+        error instanceof Error ? error.message : "Failed to save application.";
 
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const title = isEditMode ? "Edit application" : "Create application draft";
+
+  const description = isEditMode
+    ? "Update the application details and save the changes."
+    : "Capture applicant, company, and application details. The record is saved as a draft before it is submitted for review.";
+
+  const submitLabel = isEditMode ? "Save Changes" : "Create Draft";
+
+  const backUrl = applicationId ? `/applications/${applicationId}` : "/applications";
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-6 sm:px-6 lg:px-8">
@@ -49,11 +130,11 @@ export function ApplicationFormPage() {
         <Button
           asChild
           variant="ghost"
-          className="rounded-full px-4 font-bold text-slate-100 transition-all duration-200 hover:bg-white/10 hover:text-white"
+          className="rounded-full px-4 font-bold text-slate-100! transition-all duration-200 hover:bg-white/10! hover:text-white!"
         >
-          <Link to="/applications">
+          <Link to={backUrl}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to applications
+            Back
           </Link>
         </Button>
 
@@ -68,16 +149,15 @@ export function ApplicationFormPage() {
                 <div className="max-w-2xl">
                   <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-sm font-semibold text-cyan-100 shadow-sm backdrop-blur">
                     <ShieldCheck className="h-4 w-4" />
-                    Draft application
+                    {isEditMode ? "Update application" : "Draft application"}
                   </div>
 
                   <CardTitle className="mt-5 text-3xl font-black tracking-tight sm:text-5xl">
-                    Create application draft
+                    {title}
                   </CardTitle>
 
                   <CardDescription className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-                    Capture applicant, company, and application details. The record is
-                    saved as a draft before it is submitted for review.
+                    {description}
                   </CardDescription>
                 </div>
 
@@ -90,16 +170,29 @@ export function ApplicationFormPage() {
             <CardContent className="p-4 sm:p-6 lg:p-8">
               {errorMessage && (
                 <Alert variant="destructive" className="mb-6">
-                  <AlertTitle>Unable to create application</AlertTitle>
+                  <AlertTitle>Unable to save application</AlertTitle>
                   <AlertDescription>{errorMessage}</AlertDescription>
                 </Alert>
               )}
 
-              <ApplicationForm
-                submitLabel="Create Draft"
-                isSubmitting={isSubmitting}
-                onSubmit={handleCreateApplication}
-              />
+              {isLoading && (
+                <div className="space-y-4">
+                  <div className="h-24 animate-pulse rounded-3xl bg-white shadow-sm" />
+                  <div className="h-24 animate-pulse rounded-3xl bg-white shadow-sm" />
+                  <div className="h-40 animate-pulse rounded-3xl bg-white shadow-sm" />
+                </div>
+              )}
+
+              {!isLoading &&
+                (!isEditMode ||
+                  (application && canEditApplication(application.status))) && (
+                  <ApplicationForm
+                    initialValues={application ?? undefined}
+                    submitLabel={submitLabel}
+                    isSubmitting={isSubmitting}
+                    onSubmit={handleSubmit}
+                  />
+                )}
             </CardContent>
           </Card>
         </motion.div>

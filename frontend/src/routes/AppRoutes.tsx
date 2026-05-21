@@ -11,6 +11,10 @@ export function AppRoutes() {
       <Route path="/applications" element={<ApplicationListPage />} />
       <Route path="/applications/new" element={<ApplicationFormPage />} />
       <Route path="/applications/:applicationId" element={<ApplicationDetailPage />} />
+      <Route
+        path="/applications/:applicationId/edit"
+        element={<ApplicationFormPage />}
+      />
     </Routes>
   );
 }
