@@ -54,10 +54,10 @@ export function ApplicationListHeader({
             <Button
               asChild
               size="lg"
-              className="group rounded-full bg-cyan-400 px-6 font-bold text-slate-950 shadow-xl shadow-cyan-950/30 transition hover:-translate-y-0.5 hover:bg-cyan-300"
+              className="group rounded-full border border-cyan-200/70 !bg-cyan-300 px-6 font-bold !text-slate-950 shadow-xl shadow-cyan-950/30 transition-all duration-200 hover:-translate-y-0.5 hover:!bg-cyan-200 hover:!text-slate-950 hover:shadow-cyan-900/40 focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
             >
               <Link to="/applications/new">
-                <Plus className="mr-2 h-4 w-4 transition group-hover:rotate-90" />
+                <Plus className="mr-2 h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
                 Create Application
               </Link>
             </Button>
