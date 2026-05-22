@@ -1,6 +1,7 @@
 from math import ceil
 from uuid import UUID
 
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ninja import Router, Status
 
@@ -38,14 +39,38 @@ def create_application(request, payload: ApplicationCreateSchema):
 
 
 @router.get("", response=PaginatedApplicationListSchema)
-def list_applications(request, page: int = 1, page_size: int = 10):
+def list_applications(
+    request,
+    page: int = 1,
+    page_size: int = 10,
+    search: str | None = None,
+    status: str | None = None,
+    application_type: str | None = None,
+):
     page = max(page, 1)
     page_size = min(max(page_size, 1), 100)
 
     queryset = Application.objects.all().order_by("-created_at")
 
+    if search:
+        queryset = queryset.filter(
+            Q(tracking_number__icontains=search)
+            | Q(applicant_name__icontains=search)
+            | Q(applicant_email__icontains=search)
+            | Q(company_name__icontains=search)
+        )
+
+    if status:
+        queryset = queryset.filter(status=status)
+
+    if application_type:
+        queryset = queryset.filter(application_type=application_type)
+
     total = queryset.count()
     total_pages = ceil(total / page_size) if total else 1
+
+    if page > total_pages:
+        page = total_pages
 
     start = (page - 1) * page_size
     end = start + page_size

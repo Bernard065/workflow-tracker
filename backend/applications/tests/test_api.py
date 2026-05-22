@@ -86,6 +86,98 @@ def test_list_applications_endpoint_supports_pagination(client):
 
 
 @pytest.mark.django_db
+def test_list_applications_endpoint_supports_search(client):
+    Application.objects.create(
+        tracking_number="APP-2026-SEARCH001",
+        applicant_name="Alice Search",
+        applicant_email="alice@example.com",
+        company_name="Search Company Ltd",
+        application_type=ApplicationType.RECORDATION,
+        description="Searchable application.",
+    )
+
+    Application.objects.create(
+        tracking_number="APP-2026-OTHER001",
+        applicant_name="Bob Other",
+        applicant_email="bob@example.com",
+        company_name="Other Company Ltd",
+        application_type=ApplicationType.RENEWAL,
+        description="Other application.",
+    )
+
+    response = client.get("/api/applications?search=Alice")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total"] == 1
+    assert data["items"][0]["applicant_name"] == "Alice Search"
+
+
+@pytest.mark.django_db
+def test_list_applications_endpoint_supports_status_filter(client):
+    draft_application = Application.objects.create(
+        tracking_number="APP-2026-DRAFT001",
+        applicant_name="Draft User",
+        applicant_email="draft@example.com",
+        company_name="Draft Company Ltd",
+        application_type=ApplicationType.RECORDATION,
+        description="Draft application.",
+    )
+
+    submitted_application = Application.objects.create(
+        tracking_number="APP-2026-SUBMITTED001",
+        applicant_name="Submitted User",
+        applicant_email="submitted@example.com",
+        company_name="Submitted Company Ltd",
+        application_type=ApplicationType.RENEWAL,
+        description="Submitted application.",
+        status=ApplicationStatus.SUBMITTED,
+    )
+
+    response = client.get("/api/applications?status=submitted")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total"] == 1
+    assert data["items"][0]["tracking_number"] == submitted_application.tracking_number
+    assert data["items"][0]["tracking_number"] != draft_application.tracking_number
+
+
+@pytest.mark.django_db
+def test_list_applications_endpoint_supports_application_type_filter(client):
+    Application.objects.create(
+        tracking_number="APP-2026-REC001",
+        applicant_name="Recordation User",
+        applicant_email="recordation@example.com",
+        company_name="Recordation Company Ltd",
+        application_type=ApplicationType.RECORDATION,
+        description="Recordation application.",
+    )
+
+    Application.objects.create(
+        tracking_number="APP-2026-REN001",
+        applicant_name="Renewal User",
+        applicant_email="renewal@example.com",
+        company_name="Renewal Company Ltd",
+        application_type=ApplicationType.RENEWAL,
+        description="Renewal application.",
+    )
+
+    response = client.get("/api/applications?application_type=renewal")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total"] == 1
+    assert data["items"][0]["application_type"] == ApplicationType.RENEWAL
+
+
+@pytest.mark.django_db
 def test_get_application_detail_endpoint(client, application):
     response = client.get(f"/api/applications/{application.id}")
 

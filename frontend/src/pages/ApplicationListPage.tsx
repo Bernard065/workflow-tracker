@@ -1,11 +1,11 @@
 import { motion } from "framer-motion";
-import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { getApplications } from "@/api/applications";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { ApplicationEmptyState } from "@/features/applications/components/ApplicationEmptyState";
+import { ApplicationListFilters } from "@/features/applications/components/ApplicationListFilters";
 import { ApplicationListHeader } from "@/features/applications/components/ApplicationListHeader";
 import { ApplicationMobileCard } from "@/features/applications/components/ApplicationMobileCard";
 import { ApplicationsPagination } from "@/features/applications/components/ApplicationsPagination";
@@ -18,9 +18,13 @@ export function ApplicationListPage() {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [applicationTypeFilter, setApplicationTypeFilter] = useState("");
   const [totalApplications, setTotalApplications] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,13 +35,16 @@ export function ApplicationListPage() {
         return;
       }
 
-      setIsLoading(true);
+      setIsFetching(true);
       setErrorMessage(null);
     });
 
     void getApplications({
       page,
       pageSize,
+      search,
+      status: statusFilter,
+      applicationType: applicationTypeFilter,
     })
       .then((data) => {
         if (!isActive) {
@@ -57,6 +64,8 @@ export function ApplicationListPage() {
           error instanceof Error ? error.message : "Failed to load applications.";
 
         setApplications([]);
+        setTotalApplications(0);
+        setTotalPages(1);
         setErrorMessage(message);
       })
       .finally(() => {
@@ -64,13 +73,14 @@ export function ApplicationListPage() {
           return;
         }
 
-        setIsLoading(false);
+        setIsInitialLoading(false);
+        setIsFetching(false);
       });
 
     return () => {
       isActive = false;
     };
-  }, [page, pageSize]);
+  }, [page, pageSize, search, statusFilter, applicationTypeFilter]);
 
   const approvedApplications = useMemo(
     () =>
@@ -89,11 +99,36 @@ export function ApplicationListPage() {
 
   function handlePageChange(nextPage: number) {
     setPage(nextPage);
+
     window.scrollTo({
       top: 0,
       behavior: "smooth",
     });
   }
+
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setPage(1);
+  }
+
+  function handleStatusFilterChange(value: string) {
+    setStatusFilter(value);
+    setPage(1);
+  }
+
+  function handleApplicationTypeFilterChange(value: string) {
+    setApplicationTypeFilter(value);
+    setPage(1);
+  }
+
+  function handleClearFilters() {
+    setSearch("");
+    setStatusFilter("");
+    setApplicationTypeFilter("");
+    setPage(1);
+  }
+
+  const hasActiveFilters = Boolean(search || statusFilter || applicationTypeFilter);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
@@ -113,17 +148,6 @@ export function ApplicationListPage() {
 
         <Card className="border-white/80 bg-slate-50/95 shadow-2xl shadow-slate-950/20 backdrop-blur">
           <CardContent className="p-4 sm:p-6 lg:p-8">
-            {isLoading && (
-              <div className="grid gap-4">
-                {[1, 2, 3].map((item) => (
-                  <div
-                    key={item}
-                    className="h-24 animate-pulse rounded-3xl bg-white shadow-sm"
-                  />
-                ))}
-              </div>
-            )}
-
             {errorMessage && (
               <Alert variant="destructive">
                 <AlertTitle>Unable to load applications</AlertTitle>
@@ -131,48 +155,86 @@ export function ApplicationListPage() {
               </Alert>
             )}
 
-            {!isLoading && !errorMessage && applications.length === 0 && (
-              <ApplicationEmptyState />
-            )}
-
-            {!isLoading && !errorMessage && applications.length > 0 && (
+            {!errorMessage && (
               <div className="space-y-5">
-                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-950">
-                      Application records
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Review the latest application activity and open records for more
-                      details.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-500 shadow-sm">
-                    <Search className="h-4 w-4" />
-                    Search and filters
-                  </div>
+                <div>
+                  <h2 className="text-2xl font-black text-slate-950">
+                    Application records
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Review the latest application activity and open records for more
+                    details.
+                  </p>
                 </div>
 
-                <ApplicationsTable applications={applications} />
-
-                <div className="grid gap-4 lg:hidden">
-                  {applications.map((application, index) => (
-                    <ApplicationMobileCard
-                      key={application.id}
-                      application={application}
-                      index={index}
-                    />
-                  ))}
-                </div>
-
-                <ApplicationsPagination
-                  page={page}
-                  pageSize={pageSize}
-                  total={totalApplications}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
+                <ApplicationListFilters
+                  search={search}
+                  status={statusFilter}
+                  applicationType={applicationTypeFilter}
+                  onSearchChange={handleSearchChange}
+                  onStatusChange={handleStatusFilterChange}
+                  onApplicationTypeChange={handleApplicationTypeFilterChange}
+                  onClearFilters={handleClearFilters}
                 />
+
+                {isInitialLoading && (
+                  <div className="grid gap-4">
+                    {[1, 2, 3].map((item) => (
+                      <div
+                        key={item}
+                        className="h-24 animate-pulse rounded-3xl bg-white shadow-sm"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {!isInitialLoading && isFetching && (
+                  <div className="rounded-3xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm font-semibold text-cyan-800">
+                    Updating results...
+                  </div>
+                )}
+
+                {!isInitialLoading && applications.length === 0 && (
+                  <div className="space-y-4">
+                    {hasActiveFilters ? (
+                      <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+                        <h3 className="text-xl font-black text-slate-950">
+                          No matching applications found
+                        </h3>
+                        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+                          Try changing your search term, status filter, or application
+                          type filter.
+                        </p>
+                      </div>
+                    ) : (
+                      <ApplicationEmptyState />
+                    )}
+                  </div>
+                )}
+
+                {!isInitialLoading && applications.length > 0 && (
+                  <>
+                    <ApplicationsTable applications={applications} />
+
+                    <div className="grid gap-4 lg:hidden">
+                      {applications.map((application, index) => (
+                        <ApplicationMobileCard
+                          key={application.id}
+                          application={application}
+                          index={index}
+                        />
+                      ))}
+                    </div>
+
+                    <ApplicationsPagination
+                      page={page}
+                      pageSize={pageSize}
+                      total={totalApplications}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                    />
+                  </>
+                )}
               </div>
             )}
           </CardContent>
