@@ -4,11 +4,27 @@ import type {
   ApplicationCreatePayload,
   ApplicationListItem,
   ApplicationUpdatePayload,
+  PaginatedResponse,
   ReviewerDecisionPayload,
 } from "../types/application";
 
-export function getApplications(): Promise<ApplicationListItem[]> {
-  return apiRequest<ApplicationListItem[]>("/applications");
+interface GetApplicationsParams {
+  page?: number;
+  pageSize?: number;
+}
+
+export function getApplications({
+  page = 1,
+  pageSize = 10,
+}: GetApplicationsParams = {}): Promise<PaginatedResponse<ApplicationListItem>> {
+  const searchParams = new URLSearchParams({
+    page: String(page),
+    page_size: String(pageSize),
+  });
+
+  return apiRequest<PaginatedResponse<ApplicationListItem>>(
+    `/applications?${searchParams.toString()}`,
+  );
 }
 
 export function getApplication(applicationId: string): Promise<Application> {

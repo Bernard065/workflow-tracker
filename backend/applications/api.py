@@ -1,3 +1,4 @@
+from math import ceil
 from uuid import UUID
 
 from django.shortcuts import get_object_or_404
@@ -6,9 +7,9 @@ from ninja import Router, Status
 from .models import Application
 from .schemas import (
     ApplicationCreateSchema,
-    ApplicationListSchema,
     ApplicationOutSchema,
     ApplicationUpdateSchema,
+    PaginatedApplicationListSchema,
     ReviewerDecisionSchema,
 )
 from .services import (
@@ -36,9 +37,26 @@ def create_application(request, payload: ApplicationCreateSchema):
     return Status(201, application)
 
 
-@router.get("", response=list[ApplicationListSchema])
-def list_applications(request):
-    return Application.objects.all()
+@router.get("", response=PaginatedApplicationListSchema)
+def list_applications(request, page: int = 1, page_size: int = 10):
+    page = max(page, 1)
+    page_size = min(max(page_size, 1), 100)
+
+    queryset = Application.objects.all().order_by("-created_at")
+
+    total = queryset.count()
+    total_pages = ceil(total / page_size) if total else 1
+
+    start = (page - 1) * page_size
+    end = start + page_size
+
+    return {
+        "items": list(queryset[start:end]),
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 @router.get("/{application_id}", response=ApplicationOutSchema)

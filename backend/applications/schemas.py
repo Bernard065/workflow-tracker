@@ -52,3 +52,11 @@ class ApplicationListSchema(Schema):
     application_type: ApplicationType
     status: ApplicationStatus
     created_at: datetime
+
+
+class PaginatedApplicationListSchema(Schema):
+    items: list[ApplicationListSchema]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

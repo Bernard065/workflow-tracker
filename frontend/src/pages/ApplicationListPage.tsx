@@ -8,37 +8,69 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ApplicationEmptyState } from "@/features/applications/components/ApplicationEmptyState";
 import { ApplicationListHeader } from "@/features/applications/components/ApplicationListHeader";
 import { ApplicationMobileCard } from "@/features/applications/components/ApplicationMobileCard";
+import { ApplicationsPagination } from "@/features/applications/components/ApplicationsPagination";
 import { ApplicationsTable } from "@/features/applications/components/ApplicationsTable";
 import type { ApplicationListItem } from "@/types/application";
 
+const DEFAULT_PAGE_SIZE = 10;
+
 export function ApplicationListPage() {
   const [applications, setApplications] = useState<ApplicationListItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [totalApplications, setTotalApplications] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadApplications() {
-      try {
-        setIsLoading(true);
-        setErrorMessage(null);
+    let isActive = true;
 
-        const data = await getApplications();
+    queueMicrotask(() => {
+      if (!isActive) {
+        return;
+      }
 
-        setApplications(data);
-      } catch (error) {
+      setIsLoading(true);
+      setErrorMessage(null);
+    });
+
+    void getApplications({
+      page,
+      pageSize,
+    })
+      .then((data) => {
+        if (!isActive) {
+          return;
+        }
+
+        setApplications(data.items);
+        setTotalApplications(data.total);
+        setTotalPages(data.total_pages);
+      })
+      .catch((error: unknown) => {
+        if (!isActive) {
+          return;
+        }
+
         const message =
           error instanceof Error ? error.message : "Failed to load applications.";
 
+        setApplications([]);
         setErrorMessage(message);
-      } finally {
+      })
+      .finally(() => {
+        if (!isActive) {
+          return;
+        }
+
         setIsLoading(false);
-      }
-    }
+      });
 
-    void loadApplications();
-  }, []);
-
-  const totalApplications = applications.length;
+    return () => {
+      isActive = false;
+    };
+  }, [page, pageSize]);
 
   const approvedApplications = useMemo(
     () =>
@@ -54,6 +86,14 @@ export function ApplicationListPage() {
       ).length,
     [applications],
   );
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
@@ -125,6 +165,14 @@ export function ApplicationListPage() {
                     />
                   ))}
                 </div>
+
+                <ApplicationsPagination
+                  page={page}
+                  pageSize={pageSize}
+                  total={totalApplications}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
               </div>
             )}
           </CardContent>

@@ -52,8 +52,37 @@ def test_list_applications_endpoint(client, application):
 
     data = response.json()
 
-    assert len(data) >= 1
-    assert data[0]["tracking_number"] == application.tracking_number
+    assert data["total"] >= 1
+    assert data["page"] == 1
+    assert data["page_size"] == 10
+    assert data["total_pages"] >= 1
+    assert len(data["items"]) >= 1
+    assert data["items"][0]["tracking_number"] == application.tracking_number
+
+
+@pytest.mark.django_db
+def test_list_applications_endpoint_supports_pagination(client):
+    for index in range(15):
+        Application.objects.create(
+            tracking_number=f"APP-2026-PAGE{index:03d}",
+            applicant_name=f"Applicant {index}",
+            applicant_email=f"applicant{index}@example.com",
+            company_name=f"Company {index}",
+            application_type=ApplicationType.RECORDATION,
+            description="Pagination test application.",
+        )
+
+    response = client.get("/api/applications?page=2&page_size=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total"] == 15
+    assert data["page"] == 2
+    assert data["page_size"] == 5
+    assert data["total_pages"] == 3
+    assert len(data["items"]) == 5
 
 
 @pytest.mark.django_db
@@ -130,6 +159,23 @@ def test_approve_application_endpoint(client, application):
 
     assert application.status == ApplicationStatus.APPROVED
     assert application.reviewer_comment == "Application is approved."
+
+
+@pytest.mark.django_db
+def test_need_more_information_without_comment_returns_error(client, application):
+    client.post(f"/api/applications/{application.id}/submit")
+    client.post(f"/api/applications/{application.id}/start-review")
+
+    response = client.post(
+        f"/api/applications/{application.id}/decision",
+        data={
+            "decision": "need_more_information",
+            "reviewer_comment": "",
+        },
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db
