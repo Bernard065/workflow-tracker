@@ -10,9 +10,9 @@ export function ApplicationEmptyState() {
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.35 }}
-      className="flex min-h-[380px] flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-300 bg-white px-6 text-center shadow-sm"
+      className="flex min-h-95 flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-300 bg-white px-6 text-center shadow-sm"
     >
-      <div className="mb-5 rounded-full bg-gradient-to-br from-cyan-100 to-emerald-100 p-5 text-cyan-700">
+      <div className="mb-5 rounded-full bg-linear-to-br from-cyan-100 to-emerald-100 p-5 text-cyan-700">
         <FileText className="h-9 w-9" />
       </div>
 

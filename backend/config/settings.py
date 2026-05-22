@@ -12,10 +12,7 @@ from decouple import Csv, config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# ============================================================
 # Core settings
-# ============================================================
-
 SECRET_KEY = config("SECRET_KEY")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
@@ -26,11 +23,7 @@ ALLOWED_HOSTS = config(
     cast=Csv(),
 )
 
-
-# ============================================================
 # CORS settings
-# ============================================================
-
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
     default="http://localhost:5173,http://127.0.0.1:5173",
@@ -38,10 +31,21 @@ CORS_ALLOWED_ORIGINS = config(
 )
 
 
-# ============================================================
-# Application definition
-# ============================================================
+# API rate limiting settings
+API_RATE_LIMIT_REQUESTS = config(
+    "API_RATE_LIMIT_REQUESTS",
+    default=100,
+    cast=int,
+)
 
+API_RATE_LIMIT_WINDOW_SECONDS = config(
+    "API_RATE_LIMIT_WINDOW_SECONDS",
+    default=60,
+    cast=int,
+)
+
+
+# Application definitions
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -60,6 +64,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "applications.middleware.ApiRateLimitMiddleware",
+    "applications.middleware.ApiRequestLoggingMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -85,11 +91,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
-# ============================================================
 # Database
-# ============================================================
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -101,11 +103,18 @@ DATABASES = {
     }
 }
 
+# Cache
+# Used by the API rate limiting middleware.
+# For production, Redis or another shared cache would be better.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "workflow-tracker-cache",
+    }
+}
 
-# ============================================================
+
 # Password validation
-# ============================================================
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": (
@@ -124,10 +133,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# ============================================================
 # Internationalization
-# ============================================================
-
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "Africa/Nairobi"
@@ -137,16 +143,36 @@ USE_I18N = True
 USE_TZ = True
 
 
-# ============================================================
 # Static files
-# ============================================================
-
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
-# ============================================================
-# Default primary key field type
-# ============================================================
+# Logging
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(levelname)s %(asctime)s %(name)s %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+    },
+    "loggers": {
+        "applications.api": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+
+# Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
